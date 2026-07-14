@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState, Fragment } from "react";
 import svtouchLogo from "./assets/svtouc.png";
 
-// API base: ?api=https://your-api.example.com (remembered) → localStorage → same origin.
+// API base: ?api=… (remembered) → localStorage → VITE_API_BASE (build-time) → same origin.
 const qsApi = new URLSearchParams(window.location.search).get("api");
 if (qsApi) localStorage.setItem("introgen.apiBase", qsApi.replace(/\/$/, ""));
-const API_BASE = localStorage.getItem("introgen.apiBase") || window.location.origin;
+const API_BASE =
+  localStorage.getItem("introgen.apiBase") ||
+  (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "") ||
+  window.location.origin;
 
 const TONES = ["professional", "friendly", "concise", "storytelling"];
 

@@ -1,6 +1,10 @@
-// Thin API client. All calls go through the Vite proxy to the Express server.
+// Thin API client. In dev, calls go through the Vite proxy; in a split
+// deployment (frontend on Vercel, API elsewhere) set VITE_API_BASE to the
+// API's URL at build time.
+const BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+
 async function post(path, body) {
-  const res = await fetch(path, {
+  const res = await fetch(BASE + path, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -17,7 +21,7 @@ export const api = {
   search: (query) => post("/api/search", { query }),
   saveLead: (data) => post("/api/leads", data),
   adminLeads: async () => {
-    const res = await fetch("/api/admin/leads");
+    const res = await fetch(BASE + "/api/admin/leads");
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error || "Failed to load");
     return json;
