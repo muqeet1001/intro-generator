@@ -53,7 +53,9 @@ function createFileStore() {
 // ── Mongo store ───────────────────────────────────────────
 async function createMongoStore() {
   const { default: mongoose } = await import("mongoose");
-  await mongoose.connect(config.mongoUri);
+  // Fail fast (8s) instead of hanging indefinitely if Atlas is unreachable /
+  // the IP isn't whitelisted — the caller falls back to the file store.
+  await mongoose.connect(config.mongoUri, { serverSelectionTimeoutMS: 8000 });
 
   const LeadSchema = new mongoose.Schema(
     {

@@ -65,30 +65,27 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Server error" });
 });
 
-async function start() {
-  try {
-    const store = await getStore();
-    console.log(`[db] storage mode: ${store.mode}`);
-  } catch (e) {
-    console.error("[db] init failed:", e.message);
-  }
-  const server = app.listen(config.port, () => {
-    console.log(`\n  Intro Generator API → http://localhost:${config.port}`);
-    console.log(`  Admin dashboard      → http://localhost:${config.port}/admin`);
-    console.log(`  AI: ${config.ai.model} @ ${config.ai.baseUrl}`);
-    console.log(`  Search: ${config.firecrawlKey ? "Firecrawl" : "DuckDuckGo (free, no key)"}\n`);
-  });
-  server.on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
-      console.error(
-        `\n  Port ${config.port} is already in use — the server is probably already running.` +
-          `\n  Check http://localhost:${config.port}/api/health` +
-          `\n  Or stop the old one first:  taskkill /F /IM node.exe\n`
-      );
-      process.exit(1);
-    }
-    throw err;
-  });
-}
+// Open the HTTP port FIRST so the platform (Render/Fly/etc.) detects the
+// service as live immediately, THEN connect the DB in the background. Awaiting
+// the DB before listen() is what makes a slow/blocked Mongo connection hang the
+// whole deploy ("building forever, never live"). Bind 0.0.0.0 for cloud hosts.
+const server = app.listen(config.port, "0.0.0.0", () => {
+  console.log(`\n  Intro Generator API listening on 0.0.0.0:${config.port}`);
+  console.log(`  Admin dashboard → /admin`);
+  console.log(`  AI: ${config.ai.model} @ ${config.ai.baseUrl}`);
+  console.log(`  Search: ${config.firecrawlKey ? "Firecrawl" : "DuckDuckGo (free, no key)"}\n`);
 
-start();
+  // Warm the store connection in the background (non-blocking).
+  getStore()
+    .then((store) => console.log(`[db] storage mode: ${store.mode}`))
+    .catch((e) => console.error("[db] init failed (server still up):", e.message));
+});
+
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`\n  Port ${config.port} is already in use — stop the other process first.\n`);
+    process.exit(1);
+  }
+  console.error("[server] listen error:", err);
+  process.exit(1);
+});
