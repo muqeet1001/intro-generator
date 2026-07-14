@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api.js";
 import SearchAutocomplete from "../components/SearchAutocomplete.jsx";
+import svtouchMark from "../assets/svtouch-mark.png";
 
 const SECTORS = [
   "Fintech", "SaaS", "AI / ML", "EdTech", "HealthTech", "E-commerce",
@@ -173,8 +174,8 @@ export default function IntroGenerator() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 py-5 sm:px-10">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink text-cream font-display font-bold shadow-lg">◈</span>
-            <span className="font-display text-lg font-semibold tracking-tight">Intro Generator</span>
+            <img src={svtouchMark} alt="SVTouch" className="h-9 w-9 rounded-xl shadow-lg" />
+            <span className="font-display text-lg font-semibold tracking-tight">SVTouch Intro Generator</span>
           </div>
           <span className="glass-butter inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium">
             <span className="pulse-dot" /> AI Powered
@@ -357,7 +358,7 @@ export default function IntroGenerator() {
         <div className="grid grid-cols-1 gap-3 border-t border-ink/5 px-6 py-6 text-xs text-ink/50 sm:grid-cols-3 sm:px-10">
           <span>AI Powered</span>
           <span className="sm:text-center"><span className="text-ink">Write once,</span> share anywhere</span>
-          <span className="sm:text-right">Intro Generator · Monster</span>
+          <span className="sm:text-right">SVTouch Intro Generator</span>
         </div>
       </div>
     </div>

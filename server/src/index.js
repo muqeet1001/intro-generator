@@ -41,9 +41,9 @@ app.use("/api", generateRouter);
 app.use("/api", leadsRouter);
 app.use("/api", searchRouter);
 
-// Standalone admin dashboard — lives in its own top-level /admin folder so it
-// can be deployed independently; the API also serves it for local convenience.
-const ADMIN_DIR = path.join(__dirname, "../../admin");
+// Standalone admin dashboard — a React app in the top-level /admin folder,
+// deployable independently; the API serves its build for convenience.
+const ADMIN_DIR = path.join(__dirname, "../../admin/dist");
 app.use("/admin", express.static(ADMIN_DIR));
 app.get("/admin", (_req, res) => res.sendFile(path.join(ADMIN_DIR, "index.html")));
 

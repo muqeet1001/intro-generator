@@ -4,11 +4,12 @@
   "private": true,
   "description": "Standalone Intro Generator (Monster) — AI-generated founder intros with a no-auth admin dashboard.",
   "scripts": {
-    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install && npm --prefix admin install",
     "dev": "concurrently -n server,client -c green,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
     "server": "npm --prefix server run dev",
     "client": "npm --prefix client run dev",
-    "build": "npm --prefix server install && npm --prefix client install && npm --prefix client run build",
+    "admin": "npm --prefix admin run dev",
+    "build": "npm --prefix server install && npm --prefix client install && npm --prefix admin install && npm --prefix client run build && npm --prefix admin run build",
     "start": "npm --prefix server start"
   },
   "devDependencies": {

@@ -1,27 +1,31 @@
-# Intro Generator — Admin (standalone)
+# SVTouch Intro Generator — Admin (React)
 
-A single-file, dependency-free admin dashboard (`index.html`). It only **reads**
-data from the API (`GET /api/admin/leads`) and renders a filterable table with
-CSV/JSON export.
+A standalone React (Vite) dashboard that fetches submissions as JSON from the
+API (`GET /api/admin/leads`) and renders a filterable table — category chips
+with live counts, text search, expandable intros per row, CSV/JSON export.
 
-## Deploy anywhere
+## Develop
 
-This folder is fully static — host it on Netlify, Vercel, GitHub Pages, S3, or
-any web server. No build step.
-
-Point it at your API with the `?api=` query parameter once (it is remembered in
-localStorage):
-
-```
-https://your-admin-host.example.com/?api=https://your-api.example.com
+```sh
+npm install
+npm run dev        # http://localhost:5174 (proxies /api to localhost:5000)
 ```
 
-Without `?api=`, it talks to the same origin it is served from — which is why
-it also works out of the box at http://localhost:5000/admin (served by the API
-server itself).
+## Build & deploy
 
-## Requirements on the API side
+```sh
+npm run build      # outputs dist/
+```
 
-- CORS is enabled on the API (it is, by default, in `server/src/index.js`).
-- No auth (by design, per project decision). Anyone with the admin URL and the
-  API URL can read submissions — add auth before exposing publicly.
+- The API server serves `dist/` at **/admin** automatically (local + Render).
+- Or deploy `dist/` alone to Netlify/Vercel/S3 — asset paths are relative.
+  Point it at your API once with the query param (remembered in localStorage):
+
+  ```
+  https://your-admin-host.example.com/?api=https://your-api.example.com
+  ```
+
+## Auth
+
+If the server has `ADMIN_PASSWORD` set, /admin and /api/admin require HTTP
+Basic auth (any username + that password). Unset = open, for local dev.
