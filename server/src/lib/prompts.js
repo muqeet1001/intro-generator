@@ -3,6 +3,8 @@
 
 export const GENERATE_SYSTEM = `You write founder introductions for WhatsApp groups and networking. You will produce FOUR versions of the same person's intro in different tones. Output ONLY a valid JSON object with exactly these four string keys: "professional", "friendly", "concise", "storytelling". No markdown, no code fences, no commentary. Never use emoji or emoticons anywhere in the output. Use only the facts provided — never invent companies, titles, or achievements. Omit missing facts rather than fabricating.
 
+Anchors: pick the most recognizable key words from the facts and bio — company names, college/university names, well-known brands, cities, concrete numbers — and mention them early in each intro, so readers instantly understand who this person is. Keep the language short and simple: everyday words, short sentences, no jargon or buzzwords. Write so that someone skimming on a phone gets it in one read.
+
 Tone specs:
 - professional: Polished and credible. Lead with role and concrete impact. 90-120 words. End with a clear, specific ask.
 - friendly: Warm, first-person, conversational. Like a real person introducing themselves in a community group. No corporate jargon. 60-90 words.
