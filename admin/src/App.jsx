@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState, Fragment } from "react";
 import svtouchLogo from "./assets/svtouc.png";
 
-// API base: ?api=… (remembered) → localStorage → VITE_API_BASE (build-time) → same origin.
+// API base, in priority order:
+//   1. ?api=…  (remembered in localStorage — lets you repoint without rebuilding)
+//   2. VITE_API_BASE  (Vercel build-time env)
+//   3. the deployed backend (production default)
+//   4. same origin  (dev, where the Vite proxy handles /api)
+const PROD_API = "https://intro-generator.onrender.com";
 const qsApi = new URLSearchParams(window.location.search).get("api");
 if (qsApi) localStorage.setItem("introgen.apiBase", qsApi.replace(/\/$/, ""));
 const API_BASE =
   localStorage.getItem("introgen.apiBase") ||
   (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "") ||
-  window.location.origin;
+  (import.meta.env.PROD ? PROD_API : window.location.origin);
 
 const TONES = ["professional", "friendly", "concise", "storytelling"];
 

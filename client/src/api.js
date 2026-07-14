@@ -1,7 +1,11 @@
-// Thin API client. In dev, calls go through the Vite proxy; in a split
-// deployment (frontend on Vercel, API elsewhere) set VITE_API_BASE to the
-// API's URL at build time.
-const BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+// Thin API client.
+//  - dev: BASE is "" → calls go through the Vite proxy to localhost:5000
+//  - production build: BASE = VITE_API_BASE if set, else the deployed backend
+// Override anytime by setting VITE_API_BASE in the Vercel env.
+const PROD_API = "https://intro-generator.onrender.com";
+const BASE = (
+  import.meta.env.VITE_API_BASE || (import.meta.env.PROD ? PROD_API : "")
+).replace(/\/$/, "");
 
 async function post(path, body) {
   const res = await fetch(BASE + path, {
