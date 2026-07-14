@@ -71,9 +71,12 @@ export default function SearchAutocomplete({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
       {showDropdown && (loading || results.length > 0) && (
-        <div className="absolute z-20 left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-md bg-white shadow-lg ring-1 ring-black/10">
+        <div
+          className="absolute z-50 left-0 right-0 mt-2 max-h-72 overflow-y-auto rounded-2xl bg-white ring-1 ring-black/10"
+          style={{ boxShadow: "0 24px 48px -12px rgba(0,0,0,0.35), 0 4px 12px -4px rgba(0,0,0,0.15)" }}
+        >
           {loading && results.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-ink/60">Searching…</div>
+            <div className="px-4 py-3 text-xs text-ink/60">Searching…</div>
           ) : (
             results.map((item) => (
               <button
@@ -81,7 +84,7 @@ export default function SearchAutocomplete({
                 key={getKey(item)}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(item)}
-                className="block w-full border-b border-black/5 px-3 py-2 text-left last:border-b-0 hover:bg-sand"
+                className="block w-full border-b border-black/5 bg-white px-4 py-3 text-left last:border-b-0 hover:bg-butterSoft"
               >
                 {renderItem(item)}
               </button>

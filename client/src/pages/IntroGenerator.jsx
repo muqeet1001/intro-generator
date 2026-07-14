@@ -201,8 +201,9 @@ export default function IntroGenerator() {
 
         {/* Body */}
         <div className="space-y-6 px-4 py-8 sm:px-10">
-          <Card step="01" title="About You" subtitle="Start with your LinkedIn — we'll try to read it and pre-fill the rest.">
-            <div className="glass-butter rounded-2xl p-4">
+          <Card step="01" title="About You" subtitle="Start with your LinkedIn — we'll try to read it and pre-fill the rest."
+            className="relative z-30">
+            <div className="glass-butter relative z-20 rounded-2xl p-4">
               <label className="mb-1.5 block text-sm font-medium">Search LinkedIn or paste URL</label>
               <SearchAutocomplete
                 value={form.linkedin}
@@ -365,9 +366,9 @@ export default function IntroGenerator() {
   );
 }
 
-function Card({ step, title, subtitle, children }) {
+function Card({ step, title, subtitle, children, className = "" }) {
   return (
-    <div className="glass-panel reveal rounded-4xl p-6 sm:p-7">
+    <div className={`glass-panel reveal rounded-4xl p-6 sm:p-7 ${className}`}>
       <div className="flex items-start gap-4">
         {step && (
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full glass-butter font-display text-sm font-semibold">
