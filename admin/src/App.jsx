@@ -25,6 +25,8 @@ export default function App() {
   const [activeCat, setActiveCat] = useState("");
   const [openId, setOpenId] = useState(null);
 
+  const [deleting, setDeleting] = useState(null);
+
   async function load() {
     setLoading(true);
     setError("");
@@ -41,6 +43,19 @@ export default function App() {
       );
     }
     setLoading(false);
+  }
+
+  async function remove(lead) {
+    if (!window.confirm(`Delete the record for "${lead.name || lead.email || "this person"}"? This can't be undone.`)) return;
+    setDeleting(lead.id);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/leads/${lead.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+      setLeads((rows) => rows.filter((r) => r.id !== lead.id)); // optimistic
+    } catch (e) {
+      alert(e.message);
+    }
+    setDeleting(null);
   }
 
   useEffect(() => {
@@ -176,9 +191,12 @@ export default function App() {
                             ? <a href={l.linkedin[0]} target="_blank" rel="noreferrer">profile</a>
                             : "—"}
                         </td>
-                        <td style={{ textAlign: "right" }}>
+                        <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                           <button className="view" onClick={() => setOpenId(isOpen ? null : l.id)}>
                             {isOpen ? "Hide" : "View intros"}
+                          </button>
+                          <button className="del" onClick={() => remove(l)} disabled={deleting === l.id} title="Delete record">
+                            {deleting === l.id ? "…" : "Delete"}
                           </button>
                         </td>
                       </tr>

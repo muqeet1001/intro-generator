@@ -86,6 +86,13 @@ a { color: #1a1a1a; }
   cursor: pointer; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 500;
   border: 1px solid rgba(0,0,0,.15); background: rgba(255,255,255,.4); font-family: inherit;
 }
+.del {
+  cursor: pointer; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 500;
+  border: 1px solid rgba(190,40,40,.35); background: rgba(220,60,60,.12); color: #a01e1e;
+  font-family: inherit; margin-left: 6px;
+}
+.del:hover { background: rgba(220,60,60,.22); }
+.del:disabled { opacity: .5; cursor: default; }
 
 .intros { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 0; }
 .intro { border-radius: 14px; padding: 12px; background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.6); }

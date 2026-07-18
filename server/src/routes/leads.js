@@ -69,3 +69,16 @@ leadsRouter.get("/admin/leads", async (req, res) => {
     res.status(500).json({ error: "Could not load leads." });
   }
 });
+
+// DELETE /api/admin/leads/:id → remove one submission (behind the admin guard)
+leadsRouter.delete("/admin/leads/:id", async (req, res) => {
+  try {
+    const store = await getStore();
+    const n = await store.remove(req.params.id);
+    if (!n) return res.status(404).json({ error: "Record not found" });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("[admin] delete failed:", e.message);
+    res.status(500).json({ error: "Could not delete." });
+  }
+});

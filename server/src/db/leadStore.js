@@ -47,6 +47,12 @@ function createFileStore() {
         await writeAll(rows);
       }
     },
+    async remove(id) {
+      const rows = await readAll();
+      const next = rows.filter((r) => r.id !== id);
+      await writeAll(next);
+      return rows.length - next.length;
+    },
   };
 }
 
@@ -103,6 +109,14 @@ async function createMongoStore() {
     },
     async markEmailed(id, emailed = true) {
       await Lead.findByIdAndUpdate(id, { emailSent: emailed });
+    },
+    async remove(id) {
+      try {
+        const r = await Lead.findByIdAndDelete(id);
+        return r ? 1 : 0;
+      } catch {
+        return 0; // invalid ObjectId, etc.
+      }
     },
   };
 }
