@@ -27,6 +27,10 @@ const EMPTY = {
 
 const inputCls = "glass-input w-full rounded-2xl px-4 py-2.5 text-sm";
 
+// Only treat a link field as a URL — a name typed into the search box that
+// wasn't turned into a profile URL must not be sent as a LinkedIn link.
+const asUrl = (v) => (/^https?:\/\/\S+\.\S+/i.test((v || "").trim()) ? [v.trim()] : []);
+
 export default function IntroGenerator() {
   const [form, setForm] = useState(EMPTY);
   const [intros, setIntros] = useState(null);
@@ -123,8 +127,8 @@ export default function IntroGenerator() {
         name: form.name, role: form.role, company: form.company, city: form.city,
         category: form.category,
         sector: form.sectors.join(", "), email: form.email, phone: form.phone,
-        linkedin: form.linkedin ? [form.linkedin] : [],
-        website: form.website ? [form.website] : [],
+        linkedin: asUrl(form.linkedin),
+        website: asUrl(form.website),
         bio: form.bio, can_help_with: form.can_help_with, looking_for: form.looking_for,
       });
       setIntros(res.intros);
@@ -151,8 +155,8 @@ export default function IntroGenerator() {
     try {
       await api.saveLead({
         email, name: form.name,
-        linkedin: form.linkedin ? [form.linkedin] : [],
-        website: form.website ? [form.website] : [],
+        linkedin: asUrl(form.linkedin),
+        website: asUrl(form.website),
         payload: { ...form, sector: form.sectors.join(", ") },
         intros,
       });
@@ -300,7 +304,7 @@ export default function IntroGenerator() {
               <span className="inline-block rounded-full border border-ink/20 px-3 py-1 text-xs font-medium">Your 4 intros</span>
               <h2 className="mt-3 font-display text-3xl font-semibold">Pick the one that sounds like you</h2>
               {source === "fallback" && (
-                <p className="mt-2 text-xs text-amber-700">AI was unavailable — these are template drafts. Start Ollama and regenerate for AI-written versions.</p>
+                <p className="mt-2 text-xs text-amber-700">The AI service is busy right now — these are quick drafts. Tap Regenerate in a moment for polished, AI-written versions.</p>
               )}
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

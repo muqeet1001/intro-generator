@@ -94,6 +94,12 @@ generateRouter.post("/generate", async (req, res) => {
     return res.status(400).json({ error: e?.errors?.[0]?.message || "Invalid input" });
   }
 
+  // Drop non-URL junk from the link fields. Users often type a name into the
+  // LinkedIn search box without picking a result, leaving raw text there — that
+  // would fail the MCP's url validation and force a template fallback.
+  data.linkedin = (data.linkedin || []).filter((u) => /^https?:\/\/\S+\.\S+/i.test(u));
+  data.website = (data.website || []).filter((u) => /^https?:\/\/\S+\.\S+/i.test(u));
+
   // Gather optional reference material from links (best-effort).
   const refs = [];
   let fetched = false;
