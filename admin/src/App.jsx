@@ -15,11 +15,19 @@ const API_BASE =
   (import.meta.env.PROD ? PROD_API : window.location.origin);
 
 const TONES = ["professional", "friendly", "concise", "storytelling"];
-const AUTH_KEY = "introgen.auth"; // base64(email:password); never the raw password
+const AUTH_KEY = "introgen.auth"; // "ok" flag once the frontend password matched
+
+// Soft frontend lock. Password comes from a Vercel build-time env var so it
+// stays OUT of git. If VITE_ADMIN_PASSWORD isn't set, the admin is open.
+// NOTE: this gates the SCREEN only — the API stays open, so it keeps casual
+// visitors out but is not real security. Keep the admin URL private.
+const GATE_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || "").trim().toLowerCase();
+const GATE_PASS = import.meta.env.VITE_ADMIN_PASSWORD || "";
+const GATED = !!GATE_PASS;
 
 export default function App() {
-  const [auth, setAuth] = useState(() => localStorage.getItem(AUTH_KEY) || "");
-  const [authed, setAuthed] = useState(false); // becomes true once the API accepts our creds
+  // If not gated, we're "authed" immediately. If gated, restore from localStorage.
+  const [authed, setAuthed] = useState(() => !GATED || localStorage.getItem(AUTH_KEY) === "ok");
   const [leads, setLeads] = useState([]);
   const [storage, setStorage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -29,12 +37,16 @@ export default function App() {
   const [openId, setOpenId] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
-  const authHeaders = () => (auth ? { Authorization: `Basic ${auth}` } : {});
+  // Send Basic auth too, so this also works if the API is ever locked server-side.
+  const authHeaders = () => {
+    const t = localStorage.getItem("introgen.creds");
+    return t ? { Authorization: `Basic ${t}` } : {};
+  };
 
   function logout() {
     localStorage.removeItem(AUTH_KEY);
-    setAuth("");
-    setAuthed(false);
+    localStorage.removeItem("introgen.creds");
+    setAuthed(!GATED);
     setLeads([]);
   }
 
@@ -43,15 +55,13 @@ export default function App() {
     setError("");
     try {
       const res = await fetch(`${API_BASE}/api/admin/leads`, { headers: authHeaders() });
-      if (res.status === 401) { setAuthed(false); localStorage.removeItem(AUTH_KEY); setAuth(""); setLoading(false); return; }
+      if (res.status === 401) { logout(); setError("Session expired — please sign in again."); setLoading(false); return; }
       if (!res.ok) throw new Error(`API responded ${res.status}`);
       const data = await res.json();
       setLeads(data.leads || []);
       setStorage(data.storage || "");
-      setAuthed(true);
     } catch (e) {
       setError(`Could not reach the API at ${API_BASE} (${e.message}).`);
-      setAuthed(true); // reachability error, not an auth error — show the dashboard shell
     }
     setLoading(false);
   }
@@ -61,7 +71,6 @@ export default function App() {
     setDeleting(lead.id);
     try {
       const res = await fetch(`${API_BASE}/api/admin/leads/${lead.id}`, { method: "DELETE", headers: authHeaders() });
-      if (res.status === 401) { logout(); return; }
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
       setLeads((rows) => rows.filter((r) => r.id !== lead.id)); // optimistic
     } catch (e) {
@@ -71,36 +80,19 @@ export default function App() {
   }
 
   useEffect(() => {
-    load();
+    if (authed) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authed]);
 
-  // Login: encode email:password, try loading. If the API accepts it, load()
-  // flips `authed` true; if not, it clears and the login form re-shows.
-  async function doLogin(email, password) {
-    const token = btoa(`${email}:${password}`);
-    localStorage.setItem(AUTH_KEY, token);
-    setAuth(token);
-    setError("");
-    setLoading(true);
-    const res = await fetch(`${API_BASE}/api/admin/leads`, { headers: { Authorization: `Basic ${token}` } });
-    if (res.status === 401) {
-      localStorage.removeItem(AUTH_KEY);
-      setAuth("");
-      setAuthed(false);
-      setLoading(false);
-      return "Wrong email or password.";
-    }
-    const data = await res.json();
-    setLeads(data.leads || []);
-    setStorage(data.storage || "");
+  // Client-side password check against the build-time env vars.
+  function doLogin(email, password) {
+    if (GATE_EMAIL && email.trim().toLowerCase() !== GATE_EMAIL) return "Wrong email or password.";
+    if (password !== GATE_PASS) return "Wrong email or password.";
+    localStorage.setItem(AUTH_KEY, "ok");
+    localStorage.setItem("introgen.creds", btoa(`${email}:${password}`));
     setAuthed(true);
-    setLoading(false);
     return "";
   }
-
-  if (!authed && !loading) return <Login onLogin={doLogin} apiBase={API_BASE} />;
-  if (!authed && loading) return <Splash />;
 
   const catCounts = useMemo(() => {
     const counts = {};
@@ -151,6 +143,9 @@ export default function App() {
       return iso;
     }
   };
+
+  // Gate AFTER all hooks so the hook order never changes between renders.
+  if (GATED && !authed) return <Login onLogin={doLogin} apiBase={API_BASE} />;
 
   return (
     <div className="wrap">
@@ -267,13 +262,6 @@ export default function App() {
   );
 }
 
-function Splash() {
-  return (
-    <div className="login-wrap">
-      <div className="glass login-card"><p style={{ color: "rgba(26,26,26,.6)" }}>Loading…</p></div>
-    </div>
-  );
-}
 
 function Login({ onLogin, apiBase }) {
   const [email, setEmail] = useState("");

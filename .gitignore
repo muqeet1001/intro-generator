@@ -10,3 +10,7 @@ server/data/*.json
 
 admin/dist
 admin/node_modules
+
+# Vite local env (holds admin password)
+*.local
+.env*.local
