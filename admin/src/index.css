@@ -101,4 +101,20 @@ a { color: #1a1a1a; }
 
 .empty, .loading { padding: 40px 26px; color: rgba(26,26,26,.55); font-size: 14px; }
 
+/* Login */
+.login-wrap { min-height: 80vh; display: grid; place-items: center; padding: 20px; }
+.login-card { width: 100%; max-width: 380px; padding: 30px 28px; display: flex; flex-direction: column; gap: 8px; }
+.login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.login-brand img { width: 44px; height: 44px; border-radius: 11px; }
+.login-brand h1 { font-family: Poppins, sans-serif; font-size: 17px; font-weight: 600; }
+.login-brand p { font-size: 13px; color: rgba(26,26,26,.55); margin-top: 1px; }
+.login-card label { font-size: 12px; font-weight: 500; color: rgba(26,26,26,.7); margin-top: 6px; }
+.login-card input {
+  border-radius: 14px; padding: 11px 14px; font-size: 14px; font-family: inherit;
+  border: 1px solid rgba(255,255,255,.6); background: rgba(255,255,255,.6); outline: none;
+}
+.login-card input:focus { border-color: rgba(200,205,120,.9); box-shadow: 0 0 0 4px rgba(237,239,184,.5); }
+.login-err { color: #a01e1e; font-size: 13px; margin-top: 4px; }
+.login-api { font-size: 11px; color: rgba(26,26,26,.4); margin-top: 10px; word-break: break-all; }
+
 @media (max-width: 640px) { .intros { grid-template-columns: 1fr; } }

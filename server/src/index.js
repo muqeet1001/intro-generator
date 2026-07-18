@@ -14,18 +14,25 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 
-// Optional admin protection: set ADMIN_PASSWORD in the environment to require
-// HTTP Basic auth on /admin and /api/admin. Unset = open (local dev).
+// Admin protection: set ADMIN_PASSWORD (and optionally ADMIN_EMAIL) in the
+// environment to require credentials on /api/admin. Unset = open (local dev).
+// The admin frontend sends them as a Basic auth header; validated here.
 function adminGuard(req, res, next) {
   const pass = process.env.ADMIN_PASSWORD;
-  if (!pass) return next();
+  if (!pass) return next(); // not configured → open
+  const wantEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   const hdr = req.headers.authorization || "";
-  const decoded = hdr.startsWith("Basic ") ? Buffer.from(hdr.slice(6), "base64").toString() : "";
-  if (decoded.split(":").slice(1).join(":") === pass) return next();
-  res.set("WWW-Authenticate", 'Basic realm="Intro Generator Admin"');
-  res.status(401).send("Authentication required");
+  const decoded = hdr.startsWith("Basic ") ? Buffer.from(hdr.slice(6), "base64").toString("utf8") : "";
+  const i = decoded.indexOf(":");
+  const user = (i >= 0 ? decoded.slice(0, i) : "").trim().toLowerCase();
+  const givenPass = i >= 0 ? decoded.slice(i + 1) : "";
+  const emailOk = !wantEmail || user === wantEmail;
+  if (emailOk && givenPass === pass) return next();
+  // No WWW-Authenticate header → the browser won't show its native popup;
+  // the admin SPA handles the login UI itself.
+  res.status(401).json({ error: "Invalid credentials" });
 }
-app.use(["/admin", "/api/admin"], adminGuard);
+app.use("/api/admin", adminGuard);
 
 app.get("/api/health", async (_req, res) => {
   const store = await getStore();

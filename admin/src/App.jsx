@@ -15,8 +15,11 @@ const API_BASE =
   (import.meta.env.PROD ? PROD_API : window.location.origin);
 
 const TONES = ["professional", "friendly", "concise", "storytelling"];
+const AUTH_KEY = "introgen.auth"; // base64(email:password); never the raw password
 
 export default function App() {
+  const [auth, setAuth] = useState(() => localStorage.getItem(AUTH_KEY) || "");
+  const [authed, setAuthed] = useState(false); // becomes true once the API accepts our creds
   const [leads, setLeads] = useState([]);
   const [storage, setStorage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -24,23 +27,31 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("");
   const [openId, setOpenId] = useState(null);
-
   const [deleting, setDeleting] = useState(null);
+
+  const authHeaders = () => (auth ? { Authorization: `Basic ${auth}` } : {});
+
+  function logout() {
+    localStorage.removeItem(AUTH_KEY);
+    setAuth("");
+    setAuthed(false);
+    setLeads([]);
+  }
 
   async function load() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/admin/leads`);
+      const res = await fetch(`${API_BASE}/api/admin/leads`, { headers: authHeaders() });
+      if (res.status === 401) { setAuthed(false); localStorage.removeItem(AUTH_KEY); setAuth(""); setLoading(false); return; }
       if (!res.ok) throw new Error(`API responded ${res.status}`);
       const data = await res.json();
       setLeads(data.leads || []);
       setStorage(data.storage || "");
+      setAuthed(true);
     } catch (e) {
-      setError(
-        `Could not reach the API at ${API_BASE} (${e.message}). ` +
-          "Open this page with ?api=<your-api-url> to point it at the server."
-      );
+      setError(`Could not reach the API at ${API_BASE} (${e.message}).`);
+      setAuthed(true); // reachability error, not an auth error — show the dashboard shell
     }
     setLoading(false);
   }
@@ -49,7 +60,8 @@ export default function App() {
     if (!window.confirm(`Delete the record for "${lead.name || lead.email || "this person"}"? This can't be undone.`)) return;
     setDeleting(lead.id);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/leads/${lead.id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/admin/leads/${lead.id}`, { method: "DELETE", headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
       setLeads((rows) => rows.filter((r) => r.id !== lead.id)); // optimistic
     } catch (e) {
@@ -60,7 +72,35 @@ export default function App() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Login: encode email:password, try loading. If the API accepts it, load()
+  // flips `authed` true; if not, it clears and the login form re-shows.
+  async function doLogin(email, password) {
+    const token = btoa(`${email}:${password}`);
+    localStorage.setItem(AUTH_KEY, token);
+    setAuth(token);
+    setError("");
+    setLoading(true);
+    const res = await fetch(`${API_BASE}/api/admin/leads`, { headers: { Authorization: `Basic ${token}` } });
+    if (res.status === 401) {
+      localStorage.removeItem(AUTH_KEY);
+      setAuth("");
+      setAuthed(false);
+      setLoading(false);
+      return "Wrong email or password.";
+    }
+    const data = await res.json();
+    setLeads(data.leads || []);
+    setStorage(data.storage || "");
+    setAuthed(true);
+    setLoading(false);
+    return "";
+  }
+
+  if (!authed && !loading) return <Login onLogin={doLogin} apiBase={API_BASE} />;
+  if (!authed && loading) return <Splash />;
 
   const catCounts = useMemo(() => {
     const counts = {};
@@ -125,6 +165,7 @@ export default function App() {
             <button className="pill" onClick={load}>Refresh</button>
             <button className="pill" onClick={exportCsv}>Download CSV</button>
             <button className="pill dark" onClick={exportJson}>Export JSON</button>
+            <button className="pill" onClick={logout} title="Sign out">Logout</button>
           </div>
         </header>
 
@@ -222,6 +263,53 @@ export default function App() {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Splash() {
+  return (
+    <div className="login-wrap">
+      <div className="glass login-card"><p style={{ color: "rgba(26,26,26,.6)" }}>Loading…</p></div>
+    </div>
+  );
+}
+
+function Login({ onLogin, apiBase }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setErr("");
+    const msg = await onLogin(email.trim(), password);
+    if (msg) setErr(msg);
+    setBusy(false);
+  }
+
+  return (
+    <div className="login-wrap">
+      <form className="glass login-card" onSubmit={submit}>
+        <div className="login-brand">
+          <img src={svtouchLogo} alt="SVTouch" />
+          <div>
+            <h1>SVTouch Intro Generator</h1>
+            <p>Admin sign in</p>
+          </div>
+        </div>
+        <label>Email</label>
+        <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+        <label>Password</label>
+        <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+        {err && <p className="login-err">{err}</p>}
+        <button className="pill dark" type="submit" disabled={busy} style={{ width: "100%", padding: "11px", marginTop: "4px" }}>
+          {busy ? "Signing in…" : "Sign in"}
+        </button>
+        <p className="login-api">API: {apiBase}</p>
+      </form>
     </div>
   );
 }
