@@ -219,7 +219,7 @@ export default function IntroGenerator() {
                   <>
                     <div className="truncate text-sm font-medium">{r.title || r.url}</div>
                     {r.description && <div className="line-clamp-2 text-xs text-ink/60">{r.description}</div>}
-                    <div className="mt-0.5 truncate text-[10px] text-ink/40">{r.url}</div>
+                    <div className="mt-0.5 truncate text-[10px] text-ink/60">{r.url}</div>
                   </>
                 )}
               />
@@ -236,7 +236,7 @@ export default function IntroGenerator() {
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium">I am a…</span>
-                <span className="text-xs text-ink/50">optional — auto-detected if blank</span>
+                <span className="text-xs text-ink/65">optional — auto-detected if blank</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((c) => {
@@ -265,7 +265,7 @@ export default function IntroGenerator() {
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium">Sectors (up to {MAX_SECTORS})</span>
-                <span className="text-xs text-ink/50">{form.sectors.length}/{MAX_SECTORS}</span>
+                <span className="text-xs text-ink/65">{form.sectors.length}/{MAX_SECTORS}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {SECTORS.map((s) => {
@@ -312,7 +312,7 @@ export default function IntroGenerator() {
                 <div key={key} className="glass-panel rounded-4xl p-5">
                   <div className="mb-2 flex items-center justify-between">
                     <h3 className="font-display text-xl font-semibold">{label}</h3>
-                    <span className="text-xs text-ink/40">{(intros[key] || "").trim().split(/\s+/).filter(Boolean).length} words</span>
+                    <span className="text-xs text-ink/60">{(intros[key] || "").trim().split(/\s+/).filter(Boolean).length} words</span>
                   </div>
                   <textarea
                     className="glass-input min-h-[150px] w-full resize-y rounded-2xl p-3 text-sm"
@@ -360,7 +360,7 @@ export default function IntroGenerator() {
         )}
 
         {/* Footer strip like Enigma */}
-        <div className="grid grid-cols-1 gap-3 border-t border-ink/5 px-6 py-6 text-xs text-ink/50 sm:grid-cols-3 sm:px-10">
+        <div className="grid grid-cols-1 gap-3 border-t border-ink/5 px-6 py-6 text-xs text-ink/65 sm:grid-cols-3 sm:px-10">
           <span>AI Powered</span>
           <span className="sm:text-center"><span className="text-ink">Write once,</span> share anywhere</span>
           <span className="sm:text-right">SVTouch Intro Generator</span>
