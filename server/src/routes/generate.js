@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import { chatCompletion, extractJson } from "../services/ai.js";
+import { anthropicChat } from "../services/anthropic.js";
 import { fetchUrlText, scrapeUrl } from "../services/fetchUrl.js";
 import { lookupProfileByUrl } from "../services/searchProviders.js";
-import { generateViaLovableMcp } from "../services/lovableMcp.js";
 import { config } from "../config.js";
 import { getStore } from "../db/leadStore.js";
 import { classifyPerson } from "../lib/classify.js";
@@ -118,45 +118,37 @@ generateRouter.post("/generate", async (req, res) => {
   }\n\nReturn JSON only.`;
 
   let intros = { ...EMPTY };
-  let source = "ai";
+  let source = "fallback";
 
-  // Provider 1: SVTouch Lovable MCP (fast cloud AI, billed to Lovable credits)
-  if (config.lovableMcpUrl) {
+  // Provider chain: Claude (Anthropic) → local Ollama → deterministic template.
+  const providers = [];
+  if (config.anthropic.apiKey && config.anthropic.baseUrl) {
+    providers.push(["claude", () => anthropicChat({ system: GENERATE_SYSTEM, user: userMsg, maxTokens: 2400 })]);
+  }
+  providers.push(["ollama", () => chatCompletion({ system: GENERATE_SYSTEM, user: userMsg, maxTokens: 2400 })]);
+
+  for (const [name, fn] of providers) {
     try {
-      const remote = await generateViaLovableMcp(data);
-      // The MCP tool appends its own contact block server-side; only add ours
-      // if the remote intros don't already carry one.
-      const hasContact = /- Contact -|— Contact —/.test(remote.intros.professional || "");
-      const contact = hasContact ? "" : buildContactBlock(data);
-      const finalIntros = appendContact(remote.intros, contact);
-      recordGeneration(data, finalIntros, "lovable");
-      return res.json({
-        intros: finalIntros,
-        fetched: fetched || remote.fetched,
-        source: "lovable",
-      });
-    } catch (e) {
-      console.warn("[generate] lovable-mcp failed, trying local AI:", e.message);
+      const text = await fn();
+      const parsed = extractJson(text) || {};
+      const got = {
+        professional: String(parsed.professional || "").trim(),
+        friendly: String(parsed.friendly || "").trim(),
+        concise: String(parsed.concise || "").trim(),
+        storytelling: String(parsed.storytelling || "").trim(),
+      };
+      if (got.professional || got.friendly || got.concise || got.storytelling) {
+        intros = got;
+        source = name;
+        break;
+      }
+      throw new Error("empty AI result");
+    } catch (err) {
+      console.warn(`[generate] ${name} failed: ${err.message}`);
     }
   }
 
-  try {
-    const text = await chatCompletion({ system: GENERATE_SYSTEM, user: userMsg, maxTokens: 2400 });
-    const parsed = extractJson(text) || {};
-    intros = {
-      professional: String(parsed.professional || "").trim(),
-      friendly: String(parsed.friendly || "").trim(),
-      concise: String(parsed.concise || "").trim(),
-      storytelling: String(parsed.storytelling || "").trim(),
-    };
-    if (!intros.professional && !intros.friendly && !intros.concise && !intros.storytelling) {
-      throw new Error("empty AI result");
-    }
-  } catch (err) {
-    console.warn("[generate] AI unavailable, using fallback:", err.message);
-    intros = fallbackIntros(data);
-    source = "fallback";
-  }
+  if (source === "fallback") intros = fallbackIntros(data);
 
   const contact = buildContactBlock(data);
   const withContact = appendContact(intros, contact);
