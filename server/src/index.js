@@ -36,10 +36,12 @@ app.use("/api/admin", adminGuard);
 
 app.get("/api/health", async (_req, res) => {
   const store = await getStore();
+  const claudeReady = !!(config.anthropic.apiKey && config.anthropic.baseUrl);
   res.json({
     ok: true,
     storage: store.mode,
-    ai: { baseUrl: config.ai.baseUrl, model: config.ai.model },
+    generator: claudeReady ? `claude (${config.anthropic.model})` : "template fallback — set ANTHROPIC_* env vars",
+    aiFallback: { baseUrl: config.ai.baseUrl, model: config.ai.model },
     search: config.firecrawlKey ? "firecrawl" : "duckduckgo (free)",
   });
 });
