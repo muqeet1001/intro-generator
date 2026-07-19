@@ -22,6 +22,9 @@ export const config = {
   },
   // SVTouch Lovable app's public MCP server (legacy — disabled once Claude is set).
   lovableMcpUrl: process.env.LOVABLE_MCP_URL || "",
+  // Email (Resend). Set both to actually send the "Email me" intros.
+  resendKey: process.env.RESEND_API_KEY || "",
+  mailFrom: process.env.MAIL_FROM || "SVTouch Intro Generator <onboarding@resend.dev>",
   firecrawlKey: process.env.FIRECRAWL_API_KEY || "",
   serperKey: process.env.SERPER_API_KEY || "",
   googleKey: process.env.GOOGLE_API_KEY || "",

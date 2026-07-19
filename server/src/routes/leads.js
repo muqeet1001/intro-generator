@@ -2,6 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { getStore } from "../db/leadStore.js";
 import { classifyPerson } from "../lib/classify.js";
+import { sendIntrosEmail } from "../services/email.js";
+import { config } from "../config.js";
 
 export const leadsRouter = Router();
 
@@ -42,7 +44,20 @@ leadsRouter.post("/leads", async (req, res) => {
       intros: data.intros,
       emailSent: false,
     });
-    res.json({ ok: true, id: row.id });
+
+    // Actually email the intros if Resend is configured. Never fail the request
+    // over an email hiccup — the lead is already saved.
+    let emailed = false;
+    if (config.resendKey) {
+      try {
+        await sendIntrosEmail({ to: data.email, name: data.name, intros: data.intros });
+        emailed = true;
+        await store.markEmailed(row.id, true);
+      } catch (err) {
+        console.warn("[leads] email send failed:", err.message);
+      }
+    }
+    res.json({ ok: true, id: row.id, emailed });
   } catch (e) {
     console.error("[leads] save failed:", e.message);
     res.status(500).json({ error: "Could not save. Please try again." });

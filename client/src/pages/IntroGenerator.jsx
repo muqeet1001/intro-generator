@@ -4,13 +4,18 @@ import SearchAutocomplete from "../components/SearchAutocomplete.jsx";
 import svtouchMark from "../assets/svtouch-mark.png";
 
 const SECTORS = [
-  "Fintech", "SaaS", "AI / ML", "EdTech", "HealthTech", "E-commerce",
+  "Fintech", "SaaS", "AI / ML", "EdTech", "HealthTech", "BioTech", "E-commerce",
   "ClimateTech", "Web3", "Consumer", "Marketplace", "DeepTech", "Cybersecurity",
+  "Gaming", "Media", "Real Estate", "PropTech", "Logistics", "FoodTech", "AgriTech",
+  "Robotics", "Hardware", "Developer Tools", "LegalTech", "HRTech", "InsurTech",
+  "Travel", "Energy", "Manufacturing", "Social Impact", "Sports", "Other",
 ];
 const MAX_SECTORS = 3;
 const CATEGORIES = [
-  "Founder", "Job Seeker", "Student", "Investor",
-  "Agripreneur", "Developer", "Designer", "Freelancer",
+  "Founder", "Co-founder", "Investor", "Job Seeker", "Student", "Freelancer",
+  "Consultant", "Developer", "Designer", "Product Manager", "Marketer", "Sales",
+  "Operations", "Researcher", "Mentor", "Creator", "Executive", "Engineer",
+  "Data Scientist", "Agripreneur", "Nonprofit", "Other",
 ];
 const STORAGE_KEY = "monster:intro-generator:v1";
 const TONES = [
@@ -44,6 +49,7 @@ export default function IntroGenerator() {
   const [emailing, setEmailing] = useState(false);
   const [copied, setCopied] = useState(null);
   const [source, setSource] = useState(null);
+  const [emailDelivered, setEmailDelivered] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -153,13 +159,14 @@ export default function IntroGenerator() {
     if (!/.+@.+\..+/.test(email)) { setError("Enter a valid email."); return; }
     setEmailing(true);
     try {
-      await api.saveLead({
+      const res = await api.saveLead({
         email, name: form.name,
         linkedin: asUrl(form.linkedin),
         website: asUrl(form.website),
         payload: { ...form, sector: form.sectors.join(", ") },
         intros,
       });
+      setEmailDelivered(!!res?.emailed);
       setEmailSent(true);
     } catch (e) {
       setError(e.message || "Could not save.");
@@ -170,8 +177,7 @@ export default function IntroGenerator() {
   return (
     <div className="grain min-h-screen px-3 py-4 sm:px-6 sm:py-10">
       <div className="blobs" aria-hidden="true">
-        <div className="blob blob-1" /><div className="blob blob-2" />
-        <div className="blob blob-3" /><div className="blob blob-4" />
+        <div className="blob blob-1" /><div className="blob blob-2" /><div className="blob blob-3" />
       </div>
 
       <div className="glass reveal relative z-[2] mx-auto max-w-5xl overflow-hidden rounded-4xl">
@@ -341,7 +347,11 @@ export default function IntroGenerator() {
 
             <div className="glass-panel mx-auto max-w-xl rounded-4xl p-6">
               {emailSent ? (
-                <p className="text-sm">Saved. We've recorded your intros for <strong>{emailValue}</strong>.</p>
+                <p className="text-sm">
+                  {emailDelivered
+                    ? <>Sent! Check your inbox at <strong>{emailValue}</strong>.</>
+                    : <>Saved — we've recorded your intros for <strong>{emailValue}</strong>.</>}
+                </p>
               ) : (
                 <div className="space-y-3">
                   <p className="font-display font-semibold">Email all 4 to me</p>
